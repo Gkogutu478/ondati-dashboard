@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ondati Implementation Dashboard</title>
+<meta name="description" content="Progress, budget and timeline tracker for the Ondati Community Development Initiative Strategic Plan 2026-2031.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f6f4;
+  --surface: #fcfcfb;
+  --surface-2: #eef3ef;
+  --border: #d9e2dc;
+  --grid: #e3e8e4;
+  --ink: #0b0b0b;
+  --ink-2: #4a514c;
+  --ink-3: #6b726d;
+  --brand: #1f5c45;
+  --brand-ink: #ffffff;
+  --gold: #a87a22;
+  --bar: #1b8a5e;
+  --bar-hover: #146b49;
+  --h-short: #2a78d6;
+  --h-medium: #eb6834;
+  --h-long: #1baf7a;
+  --h-all: #8a918c;
+  --st-good: #0ca30c;
+  --st-info: #2a78d6;
+  --st-warn: #fab219;
+  --st-crit: #d03b3b;
+  --st-none: #a3aaa5;
+  --shadow: 0 1px 2px rgba(16, 40, 30, .06), 0 2px 8px rgba(16, 40, 30, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #121412;
+    --surface: #1a1a19;
+    --surface-2: #222624;
+    --border: #2f3532;
+    --grid: #2b302d;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --ink-3: #9a9b93;
+    --brand: #2a9d6c;
+    --brand-ink: #0b0b0b;
+    --gold: #d6a94a;
+    --bar: #2a9d6c;
+    --bar-hover: #3bb682;
+    --h-short: #3987e5;
+    --h-medium: #d95926;
+    --h-long: #199e70;
+    --h-all: #7c837e;
+    --st-info: #3987e5;
+    --st-none: #6d746f;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121412;
+  --surface: #1a1a19;
+  --surface-2: #222624;
+  --border: #2f3532;
+  --grid: #2b302d;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --ink-3: #9a9b93;
+  --brand: #2a9d6c;
+  --brand-ink: #0b0b0b;
+  --gold: #d6a94a;
+  --bar: #2a9d6c;
+  --bar-hover: #3bb682;
+  --h-short: #3987e5;
+  --h-medium: #d95926;
+  --h-long: #199e70;
+  --h-all: #7c837e;
+  --st-info: #3987e5;
+  --st-none: #6d746f;
+  --shadow: none;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+header.top { background: var(--brand); color: var(--brand-ink); }
+header.top .wrap { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding-top: 18px; padding-bottom: 18px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .85; font-weight: 600; }
+h1 { margin: 2px 0 0; font-size: 24px; line-height: 1.2; font-weight: 700; }
+.updated { font-size: 13px; opacity: .85; }
+.theme-btn { background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; opacity: .9; }
+nav.tabs { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
+nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; }
+nav.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 14px; font: inherit; font-weight: 600; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--gold); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin: 16px 0; }
+.filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--ink-3); font-weight: 600; gap: 4px; }
+.filters select, .filters input { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; min-width: 150px; max-width: 100%; }
+.filters input { min-width: 200px; }
+.btn { font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px; padding: 7px 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn:hover { background: var(--surface-2); }
+.filter-note { font-size: 13px; color: var(--ink-3); margin: -6px 0 12px; min-height: 1em; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); }
+.kpi .k-label { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.kpi .k-value { font-size: 28px; font-weight: 700; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.kpi .k-sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { font-size: 16px; margin: 0 0 2px; }
+.card .sub { font-size: 13px; color: var(--ink-3); margin: 0 0 12px; }
+.card + .card { margin-top: 16px; }
+.grid2 .card + .card { margin-top: 0; }
+.chart svg { display: block; overflow: visible; }
+#gantt { overflow-x: auto; }
+#gantt svg { overflow: hidden; }
+.chart text { fill: var(--ink-2); font-size: 12px; }
+.chart .val { fill: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.chart .axis { stroke: var(--border); }
+.chart .gridline { stroke: var(--grid); }
+.chart .bar { fill: var(--bar); }
+.chart .hit:hover + .bar, .chart .bar.hl { fill: var(--bar-hover); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin: 0 0 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.status .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.progress { position: relative; height: 8px; background: var(--surface-2); border-radius: 4px; width: 90px; overflow: hidden; }
+.progress > i { position: absolute; inset: 0 auto 0 0; background: var(--bar); border-radius: 4px; }
+.pct { font-size: 12px; color: var(--ink-3); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); background: var(--surface-2); position: sticky; top: 0; white-space: nowrap; }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable::after { content: " ↕"; opacity: .4; }
+th.asc::after { content: " ↑"; opacity: 1; }
+th.desc::after { content: " ↓"; opacity: 1; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tbody tr.row { cursor: pointer; }
+tbody tr.row:hover { background: var(--surface-2); }
+tr.detail td { background: var(--surface-2); font-size: 13px; color: var(--ink-2); }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 20px; }
+.detail-grid b { display: block; color: var(--ink); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.ref { font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.muted { color: var(--ink-3); }
+.small { font-size: 13px; }
+.gantt-row text.name { fill: var(--ink); }
+.gantt-group text { fill: var(--ink); font-weight: 700; font-size: 13px; }
+.today { stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.today-label { fill: var(--gold) !important; font-weight: 700; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--border); white-space: nowrap; }
+.empty { padding: 24px; text-align: center; color: var(--ink-3); }
+#tooltip { position: fixed; pointer-events: none; background: var(--ink); color: var(--surface); padding: 8px 10px; border-radius: 8px; font-size: 13px; line-height: 1.35; max-width: 300px; z-index: 50; opacity: 0; transition: opacity .08s; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+#tooltip b { font-variant-numeric: tabular-nums; }
+footer { color: var(--ink-3); font-size: 13px; padding: 24px 0 40px; }
+footer .slogan { color: var(--gold); font-weight: 800; letter-spacing: .06em; }
+.hidden { display: none !important; }
+@media (max-width: 640px) {
+  h1 { font-size: 20px; }
+  .kpi .k-value { font-size: 24px; }
+  .filters label, .filters select, .filters input { width: 100%; min-width: 0; }
+  .filters label { flex: 1 1 100%; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Ondati Community Development Initiative</div>
+      <h1>Strategic Plan Implementation Dashboard, 2026-2031</h1>
+      <div class="updated" id="updated"></div>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Dark mode</button>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Dashboard sections">
+  <div class="wrap" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="overview">Overview</button>
+    <button role="tab" aria-selected="false" data-tab="activities">Activities</button>
+    <button role="tab" aria-selected="false" data-tab="timeline">Timeline</button>
+    <button role="tab" aria-selected="false" data-tab="results">Results</button>
+    <button role="tab" aria-selected="false" data-tab="risks">Risks</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section id="filterBar">
+    <div class="filters" role="group" aria-label="Filters">
+      <label>Project <select id="fProject"></select></label>
+      <label>Horizon <select id="fHorizon"></select></label>
+      <label>Status <select id="fStatus"></select></label>
+      <label>Funding source <select id="fFunding"></select></label>
+      <label>Search <input id="fSearch" type="search" placeholder="Activity, lead, partner..."></label>
+      <button class="btn" id="resetBtn" type="button">Reset</button>
+    </div>
+    <div class="filter-note" id="filterNote"></div>
+  </section>
+
+  <section id="tab-overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Budget by project</h2>
+        <p class="sub">Indicative estimates in KES million, including contingency and escalation</p>
+        <div class="chart" id="chartProject"></div>
+      </div>
+      <div class="card">
+        <h2>Budget spread by plan year</h2>
+        <p class="sub">Each activity's cost divided evenly across the years it runs (KES million)</p>
+        <div class="chart" id="chartYear"></div>
+      </div>
+      <div class="card">
+        <h2>Activity status</h2>
+        <p class="sub">Number of activities by current status</p>
+        <div class="chart" id="chartStatus"></div>
+      </div>
+      <div class="card">
+        <h2>Budget by likely funding source</h2>
+        <p class="sub">KES million; sources to be confirmed with each partner</p>
+        <div class="chart" id="chartFunding"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>Progress by project</h2>
+      <p class="sub">Average percent complete across each project's activities</p>
+      <div class="chart" id="chartProgress"></div>
+    </div>
+  </section>
+
+  <section id="tab-activities" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <div class="small muted" id="actCount"></div>
+      <button class="btn" id="csvBtn" type="button">Download filtered list (CSV)</button>
+    </div>
+    <div class="table-wrap">
+      <table id="actTable">
+        <thead><tr>
+          <th class="sortable" data-key="ref">Ref</th>
+          <th class="sortable" data-key="project">Project</th>
+          <th class="sortable" data-key="activity">Activity</th>
+          <th class="sortable" data-key="lead">Lead</th>
+          <th class="sortable" data-key="start">Start</th>
+          <th class="sortable" data-key="end">End</th>
+          <th class="sortable num" data-key="budget">Budget (KES)</th>
+          <th class="sortable" data-key="status">Status</th>
+          <th class="sortable" data-key="pct">Progress</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="small muted">Click a row for the output, indicator, target, partners and remarks.</p>
+  </section>
+
+  <section id="tab-timeline" class="hidden">
+    <div class="card">
+      <h2>Implementation timeline</h2>
+      <p class="sub">Each bar runs from the activity's start to end date. The dashed line marks today.</p>
+      <div class="legend" id="ganttLegend"></div>
+      <div class="chart" id="gantt"></div>
+    </div>
+  </section>
+
+  <section id="tab-results" class="hidden">
+    <div class="card">
+      <h2>Results framework</h2>
+      <p class="sub">Indicators from Section 8.6.1 of the Strategic Plan, with actual values recorded at the end of each plan year.</p>
+      <div class="table-wrap"><table id="resTable"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-risks" class="hidden">
+    <div class="card">
+      <h2>Risk register</h2>
+      <p class="sub">From Section 8.7. Likelihood and impact are scored 1 to 3 in the workbook; the rating is High (6-9), Medium (3-5) or Low (1-2).</p>
+      <div class="table-wrap"><table id="riskTable"></table></div>
+    </div>
+  </section>
+
+  <footer>
+    <div>Budgets are indicative, from the Cost Estimates sheet of the implementation matrix workbook, and should be validated by a quantity surveyor. Update progress in the workbook; the dashboard refreshes from it.</div>
+    <div style="margin-top:8px"><span class="slogan">GINI NYALORE</span> · It can be done.</div>
+  </footer>
+</main>
+
+<div id="tooltip" role="status" aria-live="polite"></div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+  const D = window.DASHBOARD_DATA;
+  const $ = (s) => document.querySelector(s);
+  const NS = 'http://www.w3.org/2000/svg';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmtKES = (v) => 'KES ' + Math.round(v).toLocaleString('en-KE');
+  const fmtM = (v) => (v / 1e6).toLocaleString('en-KE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const fmtMonth = (iso) => { if (!iso) return ''; const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }); };
+  const STATUS = [
+    { key: 'Not started', color: 'var(--st-none)' },
+    { key: 'In progress', color: 'var(--st-info)' },
+    { key: 'Completed', color: 'var(--st-good)' },
+    { key: 'Delayed', color: 'var(--st-crit)' },
+    { key: 'On hold', color: 'var(--st-warn)' },
+  ];
+  const statusColor = (s) => (STATUS.find((x) => x.key === s) || STATUS[0]).color;
+  const HORIZON = [
+    { key: 'Short term', color: 'var(--h-short)', label: 'Short term (Years 1-2)' },
+    { key: 'Medium term', color: 'var(--h-medium)', label: 'Medium term (Years 2-4)' },
+    { key: 'Long term', color: 'var(--h-long)', label: 'Long term (Year 5)' },
+    { key: 'All horizons', color: 'var(--h-all)', label: 'Ongoing' },
+  ];
+  const horizonColor = (h) => (HORIZON.find((x) => x.key === h) || HORIZON[3]).color;
+  const statusHTML = (s) => `<span class="status"><span class="dot" style="background:${statusColor(s)}"></span>${esc(s)}</span>`;
+
+  /* ---------- theme ---------- */
+  const themeBtn = $('#themeBtn');
+  function currentDark() {
+    const t = document.documentElement.getAttribute('data-theme');
+    if (t) return t === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncThemeBtn() { themeBtn.textContent = currentDark() ? 'Light mode' : 'Dark mode'; }
+  try { const saved = localStorage.getItem('ondati-theme'); if (saved) document.documentElement.setAttribute('data-theme', saved); } catch (e) {}
+  syncThemeBtn();
+  themeBtn.addEventListener('click', () => {
+    const next = currentDark() ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('ondati-theme', next); } catch (e) {}
+    syncThemeBtn();
+  });
+
+  /* ---------- tooltip ---------- */
+  const tip = $('#tooltip');
+  function showTip(html, ev) {
+    tip.innerHTML = html; tip.style.opacity = 1;
+    const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = ev.clientX + pad, y = ev.clientY + pad;
+    if (x + w > window.innerWidth - 8) x = ev.clientX - w - pad;
+    if (y + h > window.innerHeight - 8) y = ev.clientY - h - pad;
+    tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+  }
+  function hideTip() { tip.style.opacity = 0; }
+
+  /* ---------- svg helpers ---------- */
+  function el(tag, attrs, parent) {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function txt(parent, x, y, s, attrs) { const t = el('text', Object.assign({ x, y }, attrs || {}), parent); t.textContent = s; return t; }
+  function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10; return m * p; }
+  // Rounded-end bar: 4px radius on the data end only, square at the baseline.
+  function hBarPath(x, y, w, h) { const r = Math.min(4, w / 2, h / 2); if (w <= 0) return ''; return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`; }
+  function vBarPath(x, y, w, h) { const r = Math.min(4, w / 2, h / 2); if (h <= 0) return ''; return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
+
+  function hBarChart(container, rows, opts) {
+    container.innerHTML = '';
+    if (!rows.length) { container.innerHTML = '<div class="empty">No activities match the filters.</div>'; return; }
+    const W = Math.max(300, container.clientWidth || 600), labelW = Math.min(opts.labelW || 230, Math.round(W * 0.42)), valW = 64, barH = 18, gap = 10, top = 6;
+    const H = top + rows.length * (barH + gap) + 4;
+    const maxChars = Math.floor((labelW - 12) / 6.4);
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': opts.aria }, container);
+    const max = opts.max || Math.max(...rows.map((r) => r.value), 0) || 1;
+    const plotW = W - labelW - valW;
+    rows.forEach((r, i) => {
+      const y = top + i * (barH + gap);
+      const w = Math.max(0, (r.value / max) * plotW);
+      const lab = r.label.length > maxChars ? r.label.slice(0, maxChars - 1) + '…' : r.label;
+      txt(svg, labelW - 10, y + barH / 2 + 4, lab, { 'text-anchor': 'end' });
+      const hit = el('rect', { x: 0, y: y - gap / 2, width: W, height: barH + gap, fill: 'transparent', class: 'hit' }, svg);
+      const bar = el('path', { d: hBarPath(labelW, y, w, barH), class: 'bar' }, svg);
+      if (opts.color) bar.style.fill = opts.color(r);
+      txt(svg, labelW + w + 6, y + barH / 2 + 4, opts.fmt(r.value), { class: 'val' });
+      hit.addEventListener('mousemove', (ev) => { bar.classList.add('hl'); showTip(opts.tip(r), ev); });
+      hit.addEventListener('mouseleave', () => { bar.classList.remove('hl'); hideTip(); });
+    });
+  }
+
+  function vBarChart(container, rows, opts) {
+    container.innerHTML = '';
+    const W = Math.max(300, container.clientWidth || 600), H = 300, left = 44, right = 8, top = 24, bottom = 46;
+    const narrow = W < 520;
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': opts.aria }, container);
+    const max = niceMax(Math.max(...rows.map((r) => r.value), 0));
+    const plotH = H - top - bottom, plotW = W - left - right;
+    for (let k = 0; k <= 4; k++) {
+      const v = (max / 4) * k, y = top + plotH - (v / max) * plotH;
+      el('line', { x1: left, x2: W - right, y1: y, y2: y, class: k === 0 ? 'axis' : 'gridline' }, svg);
+      txt(svg, left - 8, y + 4, (v / 1e6).toLocaleString('en-KE', { maximumFractionDigits: 0 }), { 'text-anchor': 'end' });
+    }
+    const band = plotW / rows.length, bw = Math.min(64, band * 0.55);
+    rows.forEach((r, i) => {
+      const x = left + band * i + (band - bw) / 2;
+      const h = (r.value / max) * plotH, y = top + plotH - h;
+      const hit = el('rect', { x: left + band * i, y: top, width: band, height: plotH, fill: 'transparent', class: 'hit' }, svg);
+      const bar = el('path', { d: vBarPath(x, y, bw, h), class: 'bar' }, svg);
+      txt(svg, x + bw / 2, y - 6, fmtM(r.value), { 'text-anchor': 'middle', class: 'val' });
+      txt(svg, x + bw / 2, top + plotH + 18, r.label, { 'text-anchor': 'middle' });
+      if (!narrow) txt(svg, x + bw / 2, top + plotH + 34, band >= 140 ? r.sub : r.short, { 'text-anchor': 'middle', style: 'font-size:11px' });
+      hit.addEventListener('mousemove', (ev) => { bar.classList.add('hl'); showTip(opts.tip(r), ev); });
+      hit.addEventListener('mouseleave', () => { bar.classList.remove('hl'); hideTip(); });
+    });
+  }
+
+  function statusChart(container, counts) {
+    container.innerHTML = '';
+    const total = counts.reduce((a, c) => a + c.n, 0);
+    const legend = document.createElement('div'); legend.className = 'legend';
+    legend.innerHTML = counts.map((c) => `<span><i class="sw" style="background:${c.color}"></i>${esc(c.key)}: <b>${c.n}</b></span>`).join('');
+    container.appendChild(legend);
+    if (!total) { container.insertAdjacentHTML('beforeend', '<div class="empty">No activities match the filters.</div>'); return; }
+    const W = Math.max(300, container.clientWidth || 600), H = 40;
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': 'Activities by status' }, container);
+    let x = 0; const shown = counts.filter((c) => c.n > 0);
+    shown.forEach((c, i) => {
+      const w = (c.n / total) * W; const gapR = i < shown.length - 1 ? 2 : 0;
+      const seg = el('rect', { x, y: 4, width: Math.max(0, w - gapR), height: 28, rx: 4, fill: c.color }, svg);
+      if (w > 60) txt(svg, x + 8, 22, `${Math.round((c.n / total) * 100)}%`, { style: 'fill:#fff;font-weight:700' });
+      seg.addEventListener('mousemove', (ev) => showTip(`${esc(c.key)}<br><b>${c.n}</b> of ${total} activities (${Math.round((c.n / total) * 100)}%)`, ev));
+      seg.addEventListener('mouseleave', hideTip);
+      x += w;
+    });
+  }
+
+  /* ---------- filters ---------- */
+  const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+  const projectOrder = uniq(D.activities.map((a) => a.project));
+  function fillSelect(sel, values, allLabel) {
+    sel.innerHTML = `<option value="">${allLabel}</option>` + values.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  }
+  fillSelect($('#fProject'), projectOrder, 'All projects');
+  fillSelect($('#fHorizon'), HORIZON.map((h) => h.key).filter((h) => D.activities.some((a) => a.horizon === h)), 'All horizons');
+  fillSelect($('#fStatus'), STATUS.map((s) => s.key), 'All statuses');
+  fillSelect($('#fFunding'), uniq(D.activities.map((a) => a.funding)), 'All sources');
+  const F = { project: '', horizon: '', status: '', funding: '', q: '' };
+  try { Object.assign(F, JSON.parse(sessionStorage.getItem('ondati-filters') || '{}')); } catch (e) {}
+  $('#fProject').value = F.project; $('#fHorizon').value = F.horizon; $('#fStatus').value = F.status; $('#fFunding').value = F.funding; $('#fSearch').value = F.q;
+  function filtered() {
+    const q = F.q.trim().toLowerCase();
+    return D.activities.filter((a) =>
+      (!F.project || a.project === F.project) && (!F.horizon || a.horizon === F.horizon) &&
+      (!F.status || a.status === F.status) && (!F.funding || a.funding === F.funding) &&
+      (!q || [a.ref, a.activity, a.lead, a.partners, a.output, a.project].join(' ').toLowerCase().includes(q)));
+  }
+  [['#fProject', 'project'], ['#fHorizon', 'horizon'], ['#fStatus', 'status'], ['#fFunding', 'funding']].forEach(([s, k]) =>
+    $(s).addEventListener('change', (e) => { F[k] = e.target.value; render(); }));
+  $('#fSearch').addEventListener('input', (e) => { F.q = e.target.value; render(); });
+  $('#resetBtn').addEventListener('click', () => { Object.assign(F, { project: '', horizon: '', status: '', funding: '', q: '' }); ['#fProject', '#fHorizon', '#fStatus', '#fFunding', '#fSearch'].forEach((s) => ($(s).value = '')); render(); });
+
+  /* ---------- tabs ---------- */
+  let activeTab = 'overview';
+  try { activeTab = sessionStorage.getItem('ondati-tab') || 'overview'; } catch (e) {}
+  function showTab(name) {
+    activeTab = name;
+    document.querySelectorAll('nav.tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+    ['overview', 'activities', 'timeline', 'results', 'risks'].forEach((t) => $('#tab-' + t).classList.toggle('hidden', t !== name));
+    $('#filterBar').classList.toggle('hidden', name === 'results' || name === 'risks');
+    try { sessionStorage.setItem('ondati-tab', name); } catch (e) {}
+  }
+  document.querySelectorAll('nav.tabs button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  /* ---------- overview ---------- */
+  function yearsActive(a) {
+    const s = new Date(a.start + 'T00:00:00'), e = new Date(a.end + 'T00:00:00');
+    return D.years.map((y) => (s <= new Date(y.end + 'T00:00:00') && e >= new Date(y.start + 'T00:00:00')) ? 1 : 0);
+  }
+  function renderOverview(rows) {
+    const total = rows.reduce((a, r) => a + r.budget, 0);
+    const avg = rows.length ? rows.reduce((a, r) => a + r.pct, 0) / rows.length : 0;
+    const done = rows.filter((r) => r.status === 'Completed').length;
+    const late = rows.filter((r) => r.status === 'Delayed').length;
+    const inprog = rows.filter((r) => r.status === 'In progress').length;
+    const allTotal = D.activities.reduce((a, r) => a + r.budget, 0);
+    $('#kpis').innerHTML = [
+      ['Estimated budget', 'KES ' + fmtM(total) + 'M', rows.length === D.activities.length ? 'Five-year programme, indicative' : `${Math.round((total / allTotal) * 100)}% of KES ${fmtM(allTotal)}M total`],
+      ['Activities', rows.length, `${projectOrder.length} workstreams in the plan`],
+      ['Average progress', Math.round(avg * 100) + '%', 'Mean percent complete'],
+      ['Completed', done, `${inprog} in progress`],
+      ['Delayed', late, late ? 'Need attention' : 'None flagged'],
+    ].map(([l, v, s]) => `<div class="kpi"><div class="k-label">${l}</div><div class="k-value">${v}</div><div class="k-sub">${s}</div></div>`).join('');
+
+    const byProj = projectOrder.map((p) => ({ label: p, value: rows.filter((r) => r.project === p).reduce((a, r) => a + r.budget, 0), n: rows.filter((r) => r.project === p).length }))
+      .filter((r) => r.n > 0).sort((a, b) => b.value - a.value);
+    hBarChart($('#chartProject'), byProj, { aria: 'Budget by project', fmt: fmtM, tip: (r) => `${esc(r.label)}<br><b>${fmtKES(r.value)}</b><br>${r.n} activities · ${total ? Math.round((r.value / total) * 100) : 0}% of filtered budget` });
+
+    const perYear = D.years.map((y, i) => ({ label: y.label, sub: y.span, short: `${y.start.slice(0, 4)}/${y.end.slice(2, 4)}`, value: 0, n: 0 }));
+    rows.forEach((r) => { const act = yearsActive(r); const k = act.reduce((a, b) => a + b, 0) || 1; act.forEach((v, i) => { if (v) { perYear[i].value += r.budget / k; perYear[i].n += 1; } }); });
+    vBarChart($('#chartYear'), perYear, { aria: 'Budget spread by plan year', tip: (r) => `${r.label} (${r.sub})<br><b>${fmtKES(r.value)}</b><br>${r.n} activities running` });
+
+    statusChart($('#chartStatus'), STATUS.map((s) => ({ key: s.key, color: s.color, n: rows.filter((r) => r.status === s.key).length })));
+
+    const fund = uniq(D.activities.map((a) => a.funding)).map((f) => ({ label: f, value: rows.filter((r) => r.funding === f).reduce((a, r) => a + r.budget, 0), n: rows.filter((r) => r.funding === f).length }))
+      .filter((r) => r.n > 0).sort((a, b) => b.value - a.value);
+    hBarChart($('#chartFunding'), fund, { aria: 'Budget by funding source', labelW: 190, fmt: fmtM, tip: (r) => `${esc(r.label)}<br><b>${fmtKES(r.value)}</b><br>${r.n} activities` });
+
+    const prog = projectOrder.map((p) => { const rs = rows.filter((r) => r.project === p); return { label: p, value: rs.length ? rs.reduce((a, r) => a + r.pct, 0) / rs.length : 0, n: rs.length }; }).filter((r) => r.n > 0);
+    hBarChart($('#chartProgress'), prog, { aria: 'Average progress by project', max: 1, labelW: 260, fmt: (v) => Math.round(v * 100) + '%', tip: (r) => `${esc(r.label)}<br><b>${Math.round(r.value * 100)}%</b> average complete<br>${r.n} activities` });
+  }
+
+  /* ---------- activities table ---------- */
+  let sortKey = 'ref', sortDir = 1, openRef = null;
+  const refKey = (r) => r.split('.').map((p) => (isNaN(p) ? p : String(p).padStart(3, '0'))).join('.');
+  function sortRows(rows) {
+    return rows.slice().sort((a, b) => {
+      let x = a[sortKey], y = b[sortKey];
+      if (sortKey === 'ref') { x = (/^\d/.test(a.ref) ? '1' : '0') + refKey(a.ref); y = (/^\d/.test(b.ref) ? '1' : '0') + refKey(b.ref); }
+      if (typeof x === 'number') return (x - y) * sortDir;
+      return String(x || '').localeCompare(String(y || '')) * sortDir;
+    });
+  }
+  document.querySelectorAll('#actTable th.sortable').forEach((th) => th.addEventListener('click', () => {
+    const k = th.dataset.key; if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = (k === 'budget' || k === 'pct') ? -1 : 1; }
+    renderTable(filtered());
+  }));
+  function renderTable(rows) {
+    document.querySelectorAll('#actTable th.sortable').forEach((th) => { th.classList.toggle('asc', th.dataset.key === sortKey && sortDir === 1); th.classList.toggle('desc', th.dataset.key === sortKey && sortDir === -1); });
+    const tb = $('#actTable tbody');
+    const total = rows.reduce((a, r) => a + r.budget, 0);
+    $('#actCount').textContent = `${rows.length} activities · ${fmtKES(total)}`;
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="9" class="empty">No activities match the filters.</td></tr>'; return; }
+    tb.innerHTML = sortRows(rows).map((a) => {
+      const main = `<tr class="row" data-ref="${esc(a.ref)}" tabindex="0" aria-expanded="${openRef === a.ref}">
+        <td class="ref">${esc(a.ref)}</td><td class="small">${esc(a.project)}</td><td>${esc(a.activity)}</td><td class="small">${esc(a.lead)}</td>
+        <td class="small">${fmtMonth(a.start)}</td><td class="small">${fmtMonth(a.end)}</td><td class="num">${Math.round(a.budget).toLocaleString('en-KE')}</td>
+        <td>${statusHTML(a.status)}</td><td><div style="display:flex;align-items:center"><div class="progress"><i style="width:${Math.round(a.pct * 100)}%"></i></div><span class="pct">${Math.round(a.pct * 100)}%</span></div></td></tr>`;
+      const det = openRef === a.ref ? `<tr class="detail"><td colspan="9"><div class="detail-grid">
+        <div><b>Output</b>${esc(a.output)}</div><div><b>Indicator</b>${esc(a.indicator)}</div><div><b>Target and date</b>${esc(a.target)}</div>
+        <div><b>Key partners</b>${esc(a.partners)}</div><div><b>Funding source</b>${esc(a.funding)}</div><div><b>Means of verification</b>${esc(a.verification)}</div>
+        <div><b>Objective / horizon</b>${esc(a.objective)} · ${esc(a.horizon)}</div><div><b>Completed on</b>${a.completed ? fmtMonth(a.completed) : '—'}</div><div><b>Remarks</b>${esc(a.remarks) || '—'}</div>
+      </div></td></tr>` : '';
+      return main + det;
+    }).join('');
+    tb.querySelectorAll('tr.row').forEach((tr) => {
+      const toggle = () => { openRef = openRef === tr.dataset.ref ? null : tr.dataset.ref; renderTable(filtered()); };
+      tr.addEventListener('click', toggle);
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    });
+  }
+  $('#csvBtn').addEventListener('click', () => {
+    const cols = ['ref', 'objective', 'project', 'horizon', 'activity', 'output', 'indicator', 'target', 'lead', 'partners', 'start', 'end', 'budget', 'funding', 'verification', 'status', 'pct', 'completed', 'remarks'];
+    const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const csv = [cols.join(',')].concat(sortRows(filtered()).map((a) => cols.map((c) => q(c === 'budget' ? Math.round(a[c]) : a[c])).join(','))).join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'ondati-activities.csv'; document.body.appendChild(link); link.click(); link.remove();
+  });
+
+  /* ---------- gantt ---------- */
+  $('#ganttLegend').innerHTML = HORIZON.map((h) => `<span><i class="sw" style="background:${h.color}"></i>${h.label}</span>`).join('') + (new Date() < new Date(D.years[0].start + 'T00:00:00') ? `<span class="muted">Plan starts ${fmtMonth(D.years[0].start)}</span>` : '<span><i class="sw" style="background:transparent;border:1.5px dashed var(--gold)"></i>Today</span>');
+  function renderGantt(rows) {
+    const c = $('#gantt'); c.innerHTML = '';
+    if (!rows.length) { c.innerHTML = '<div class="empty">No activities match the filters.</div>'; return; }
+    const groups = projectOrder.map((p) => ({ p, items: sortRows(rows.filter((r) => r.project === p)) })).filter((g) => g.items.length);
+    const W = Math.max(900, c.clientWidth || 900), labelW = 340, right = 16, top = 40, rowH = 22, groupH = 30;
+    const H = top + groups.reduce((a, g) => a + groupH + g.items.length * rowH, 0) + 10;
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': 'Implementation timeline' }, c);
+    const t0 = new Date(D.years[0].start + 'T00:00:00').getTime(), t1 = new Date(D.years[D.years.length - 1].end + 'T23:59:59').getTime();
+    const X = (iso) => labelW + ((new Date(iso + 'T00:00:00').getTime() - t0) / (t1 - t0)) * (W - labelW - right);
+    D.years.forEach((y) => {
+      const x0 = X(y.start), x1 = X(y.end);
+      el('line', { x1: x0, x2: x0, y1: top - 8, y2: H - 6, class: 'gridline' }, svg);
+      txt(svg, (x0 + x1) / 2, 16, y.label, { 'text-anchor': 'middle', style: 'font-weight:700;fill:var(--ink)' });
+      txt(svg, (x0 + x1) / 2, 30, y.span, { 'text-anchor': 'middle', style: 'font-size:11px' });
+    });
+    el('line', { x1: W - right, x2: W - right, y1: top - 8, y2: H - 6, class: 'gridline' }, svg);
+    let y = top;
+    groups.forEach((g) => {
+      const gg = el('g', { class: 'gantt-group' }, svg);
+      txt(gg, 4, y + 20, g.p);
+      y += groupH;
+      g.items.forEach((a) => {
+        const row = el('g', { class: 'gantt-row' }, svg);
+        const name = (a.ref + '  ' + a.activity);
+        txt(row, 14, y + 15, name.length > 48 ? name.slice(0, 47) + '…' : name, { class: 'name', style: 'font-size:11.5px' });
+        const xs = X(a.start), xe = Math.max(X(a.end), xs + 4);
+        const bar = el('rect', { x: xs, y: y + 4, width: xe - xs, height: rowH - 9, rx: 4, fill: horizonColor(a.horizon) }, row);
+        if (a.pct > 0) el('rect', { x: xs, y: y + rowH - 7, width: (xe - xs) * a.pct, height: 2.5, fill: 'var(--ink)' }, row);
+        const hit = el('rect', { x: 0, y, width: W, height: rowH, fill: 'transparent' }, row);
+        hit.addEventListener('mousemove', (ev) => { bar.setAttribute('opacity', .8); showTip(`<b>${esc(a.ref)}</b> ${esc(a.activity)}<br>${fmtMonth(a.start)} – ${fmtMonth(a.end)} · ${esc(a.horizon)}<br>${fmtKES(a.budget)}<br>${esc(a.status)} · ${Math.round(a.pct * 100)}% complete`, ev); });
+        hit.addEventListener('mouseleave', () => { bar.removeAttribute('opacity'); hideTip(); });
+        y += rowH;
+      });
+    });
+    const today = new Date(); const ti = today.getTime();
+    if (ti >= t0 && ti <= t1) {
+      const xt = labelW + ((ti - t0) / (t1 - t0)) * (W - labelW - right);
+      el('line', { x1: xt, x2: xt, y1: top - 6, y2: H - 6, class: 'today' }, svg);
+    }
+  }
+
+  /* ---------- results & risks ---------- */
+  function renderResults() {
+    const yrs = D.years.map((y) => y.label.replace('Year ', 'Y'));
+    const rows = D.results.map((r) => `<tr><td class="small"><b>${esc(r.project)}</b><br><span class="muted">${esc(r.objective)}</span></td><td>${esc(r.indicator)}</td><td class="small">${esc(r.baseline)}</td><td class="small">${esc(r.target2)}</td><td class="small">${esc(r.target5)}</td>${r.actuals.map((v) => `<td class="small">${esc(v) || '<span class="muted">—</span>'}</td>`).join('')}<td>${r.onTrack ? onTrackChip(r.onTrack) : '<span class="muted small">Not yet rated</span>'}</td></tr>`).join('');
+    $('#resTable').innerHTML = `<thead><tr><th>Project</th><th>Indicator</th><th>Baseline</th><th>Year 2 target</th><th>Year 5 target</th>${yrs.map((y) => `<th>Actual ${y}</th>`).join('')}<th>Status</th></tr></thead><tbody>${rows}</tbody>`;
+  }
+  function onTrackChip(v) { const c = v === 'On track' ? 'var(--st-good)' : v === 'At risk' ? 'var(--st-warn)' : 'var(--st-crit)'; return `<span class="status"><span class="dot" style="background:${c}"></span>${esc(v)}</span>`; }
+  function renderRisks() {
+    const rc = (r) => r === 'High' ? 'var(--st-crit)' : r === 'Medium' ? 'var(--st-warn)' : 'var(--st-good)';
+    const rows = D.risks.map((r) => `<tr><td class="ref">${r.no}</td><td><b>${esc(r.risk)}</b><br><span class="small muted">${esc(r.effect)}</span></td><td class="small">${esc(r.response)}</td><td class="small">${esc(r.lead)}</td><td class="num">${esc(r.likelihood) || '—'}</td><td class="num">${esc(r.impact) || '—'}</td><td>${r.rating ? `<span class="status"><span class="dot" style="background:${rc(r.rating)}"></span>${esc(r.rating)} (${esc(r.score)})</span>` : '<span class="muted small">Not yet scored</span>'}</td><td class="small">${r.reviewed ? fmtMonth(r.reviewed) : '—'}</td></tr>`).join('');
+    $('#riskTable').innerHTML = `<thead><tr><th>No.</th><th>Risk and effect</th><th>Response</th><th>Lead</th><th class="num">Likelihood</th><th class="num">Impact</th><th>Rating</th><th>Last reviewed</th></tr></thead><tbody>${rows}</tbody>`;
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    const rows = filtered();
+    try { sessionStorage.setItem('ondati-filters', JSON.stringify(F)); } catch (e) {}
+    const active = ['project', 'horizon', 'status', 'funding'].filter((k) => F[k]).map((k) => F[k]);
+    if (F.q) active.push(`"${F.q}"`);
+    $('#filterNote').textContent = active.length ? `Showing ${rows.length} of ${D.activities.length} activities · filtered by ${active.join(', ')}` : `Showing all ${D.activities.length} activities`;
+    renderOverview(rows); renderTable(rows); renderGantt(rows);
+  }
+  $('#updated').textContent = `Data from ${D.source} · updated ${D.generated}`;
+  renderResults(); renderRisks(); showTab(activeTab); render();
+  document.querySelectorAll('nav.tabs button').forEach((b) => b.addEventListener('click', () => render()));
+  let rt = null, lastW = window.innerWidth;
+  window.addEventListener('resize', () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rt); rt = setTimeout(render, 150); });
+})();
+</script>
+</body>
+</html>
